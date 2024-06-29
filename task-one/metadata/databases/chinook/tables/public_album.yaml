@@ -1,0 +1,3 @@
+table:
+  name: album
+  schema: public

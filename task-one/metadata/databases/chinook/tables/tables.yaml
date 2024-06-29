@@ -1,0 +1,3 @@
+- "!include public_album.yaml"
+- "!include public_artist.yaml"
+- "!include public_track.yaml"
