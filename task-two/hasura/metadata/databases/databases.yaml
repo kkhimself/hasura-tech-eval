@@ -1,0 +1,13 @@
+- name: Neon
+  kind: postgres
+  configuration:
+    connection_info:
+      database_url:
+        from_env: NEON_URL
+      isolation_level: read-committed
+      use_prepared_statements: false
+  customization:
+    root_fields:
+      prefix: music_
+  tables: "!include Neon/tables/tables.yaml"
+  functions: "!include Neon/functions/functions.yaml"
