@@ -1,6 +1,5 @@
 version: 3
-endpoint: 
-admin_secret: 
+endpoint: http://localhost:8111
 metadata_directory: metadata
 actions:
   kind: synchronous
