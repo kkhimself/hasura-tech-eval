@@ -477,25 +477,34 @@
     }
     ```
 
-4. `xxx` as *xxx*
+- Execute a complex query of your choice, with and without caching. Share the query, the response and the response time for each.
 
     **Headers**:
 
-    ```http
-    xxx
-    ```
+    None other than `x-hasura-admin-secret` and `content-type`.
 
     **Query**:
 
     ```graphql
-    xxx
+    query first_track @cached(ttl: 60) {
+      music_artist(order_by: {name: asc}) {
+        artist_id
+        name
+        album(order_by: {title: asc}) {
+          album_id
+          title
+          track(limit: 1, order_by: {name: asc}) {
+            track_id
+            name
+          }
+        }
+      }
+    }
     ```
 
     **Result**:
 
-    ```json
-    xxx
-    ```
+    The response times ranged between 160 and 170ms irrespective of caching. The HTTP response did not include the `X-Hasura-Query-Cache-Key` either. Caching does not seem to be enabled because it is available only on the Cloud and Enterprise Editions.
 
 
 #### docker-compose.yaml for your working environment
