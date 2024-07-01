@@ -1,19 +1,19 @@
 table:
-  name: media_types
+  name: media_type
   schema: public
 array_relationships:
-  - name: tracks
+  - name: track
     using:
       foreign_key_constraint_on:
         column: media_type_id
         table:
-          name: tracks
+          name: track
           schema: public
 select_permissions:
   - role: artist
     permission:
       columns:
         - name
-        - id
+        - media_type_id
       filter: {}
     comment: ""

@@ -1,19 +1,19 @@
 table:
-  name: genres
+  name: genre
   schema: public
 array_relationships:
-  - name: tracks
+  - name: track
     using:
       foreign_key_constraint_on:
         column: genre_id
         table:
-          name: tracks
+          name: track
           schema: public
 select_permissions:
   - role: artist
     permission:
       columns:
         - name
-        - id
+        - genre_id
       filter: {}
     comment: ""

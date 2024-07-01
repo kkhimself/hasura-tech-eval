@@ -1,22 +1,22 @@
 table:
-  name: artists
+  name: artist
   schema: public
 array_relationships:
-  - name: albums
+  - name: album
     using:
       foreign_key_constraint_on:
         column: artist_id
         table:
-          name: albums
+          name: album
           schema: public
 select_permissions:
   - role: artist
     permission:
       columns:
         - name
-        - id
+        - artist_id
       filter:
-        - id:
-            _eq: X-Hasura-User-Id
-      allow_aggregations: true
+        artist_id:
+            _eq: X-Hasura-Artist-Id
+      allow_aggregations: false
     comment: ""

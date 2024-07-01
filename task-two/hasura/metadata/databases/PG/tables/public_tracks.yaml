@@ -1,5 +1,5 @@
 table:
-  name: tracks
+  name: track
   schema: public
 object_relationships:
   - name: album
@@ -20,10 +20,10 @@ select_permissions:
         - album_id
         - bytes
         - genre_id
-        - id
+        - track_id
         - media_type_id
         - milliseconds
         - unit_price
       filter: {}
-      allow_aggregations: true
+      allow_aggregations: false
     comment: ""

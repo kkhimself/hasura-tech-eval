@@ -53,7 +53,7 @@
 
 1. How many artists are in the database?
 
-      Query:
+      **Query**:
 
       ```graphql
       query artist_count {
@@ -65,7 +65,7 @@
       }
       ```
 
-      Response:
+      **Response**:
 
       ```json
       {
@@ -83,7 +83,7 @@
 
       Added `artist -> album` and `album -> track` foreign key references on the Hasura Console. Since the *track* table does not have a column that indicates the track number within the album, I will use the first track in the album by ascending order of track title.
 
-      Query:
+      **Query**:
 
       ``` graphql
       query first_track {
@@ -102,7 +102,7 @@
       }
       ```
 
-      Response:
+      **Response**:
 
       ```json
       {
@@ -157,7 +157,7 @@
     X-Hasura-Role: artist
     ```
 
-    Query:
+    **Query**:
 
     ```graphql
     query AlbumsByArtist {
@@ -169,7 +169,7 @@
     }
     ```
 
-    Response:
+    **Response**:
 
     ```json
     {
@@ -189,7 +189,7 @@
 
 4. Using a GraphQL mutation, add your favorite artist and one of their albums that isn’t in the dataset.
 
-    Mutation:
+    **Mutation**:
 
     ``` graphql
     mutation AddArtistAndAlbum {
@@ -206,7 +206,7 @@
     }
     ```
 
-    Response:
+    **Response**:
 
     ```json
     {
@@ -287,3 +287,227 @@
     ```
 
 ## Task Two
+
+#### Describe any issues you discovered with the shared deployment artifacts and the steps you took to remediate the issue(s)
+
+1. **Issue**: `docker-compose.yaml` did not include initialization scripts for the database.
+
+    **Remediation**:
+
+    Created an `init.sql` file using the Chinook dataset and mapped it to the `/docker-entrypoint-initdb.d` directory of the *postgres* image in `docker-compose.yaml`
+
+2. **Issue**: Password and database name were incorrect in the `HASURA_GRAPHQL_METADATA_DATABASE_URL` environment variable of `graphql-engine` service.
+
+    **Remediation**:
+
+    Moved the Postgres password to a `.env` file and corrected all connection strings in `docker-compose.yaml`.
+
+3. **Issue**: Docker Compose Error: `manifest for hasura/graphql-engine:v2.48.2-pro not found: manifest unknown: manifest unknown`
+
+    **Remediation**:
+
+    Changed the image in `docker-compose.yaml` to `hasura/graphql-engine:v2.40.2`, the latest available non-beta version.
+
+4. **Issue**: Container port of the graphql-engine service in `docker-compose.yaml` was incorrect and the host port did not match `endpoint` URL in `config.yaml`.
+
+    **Remediation**:
+
+    Correct container port of the graphql-engine service in `docker-compose.yaml` to `8080` and correct `endpoint` in `config.yaml` to `http://localhost:8111`.
+
+5. **Issue**: `hasura metadata apply` throws this error: `error: open C:\\...\\hasura\\metadata\\databases\\Neon\\tables\\tables.yaml: The system cannot find the path specified."`
+
+    **Remediation**:
+
+    Corrected paths in `metadata\databases\databases.yaml`
+
+6. **Issue**: `"error applying metadata \n{\n  \"error\": \"parsing boolean expression failed, expected Object, but encountered Array\",\n  \"path\": \"$.args.metadata.sources[0].tables[1].select_permissions[0].permission.filter\",\n  \"code\": \"parse-failed\"\n}"`
+
+    **Remediation**: Corrected the value of `select_permissions.permission.filter` by removing the `-` before the colum name in the file `metadata\databases\PG\tables\public_artists.yaml`. While I was there, I noticed that the correct column name should be `album_id` and not `id`, so I corrected it too.
+
+7. **Issue**: `WARN Metadata is inconsistent` with several errors like `Inconsistent object: no such table/view exists in source: "media_types"`
+
+    **Remediation**: The table names in the database are singulars while the metadata refers to the plural forms of the names. Corrected the table names in the .yaml files under `metadata\databases\PG\tables\`
+
+8. **Issue**: `WARN Metadata is inconsistent` with several errors like `Inconsistent object: in table  "album": in permission for role "artist": "id" does not exist`
+
+    **Remediation**: The *id* column names in the database are prefixed with the table name like `artist_id` while the metadata refers columns without the prefix like `id`. Corrected the column names in the .yaml files under `metadata\databases\PG\tables\`.
+
+9. **Issue**: `Inconsistent object: in function "custom_sql_artists": no such function exists: "custom_sql_artists"`
+
+    **Remediation**:
+
+    I have not fixed this issue yet as I could not find the DDL for the SQL function `custom_sql_artists`.
+
+10. **Issue**: Errors related to *admin_secret*
+
+    **Remediation**:
+
+    Moved the `HASURA_GRAPHQL_ADMIN_SECRET` in `docker-compose.yaml` to an environment variable and removed `admin_secret` from `config.yaml`.
+
+#### Include the requested artifacts from each above question 
+
+1. `query getTracks` as *administrator*
+
+    In the metadata, all tables are prefixed with *music_*, table names are plurals and *id* columns are prefixed with the table name. Corrected the query to account for these.
+
+    **Headers**:
+
+    None other than `x-hasura-admin-secret` and `content-type`.
+
+    **Query**:
+
+    ```graphql
+    query getTracks($genre: String, $limit: Int, $offset: Int) {
+      music_track(limit: $limit, offset: $offset, where: {genre: {name: {_eq: $genre}}}) {
+        name
+        track_id
+      }
+    }
+    ```
+
+    **Variables**:
+
+    ```json
+    {
+      "genre": "Metal",
+      "limit": 5,
+      "offset": 50
+    }
+    ```
+
+    **Result**:
+
+    ```json
+    {
+      "data": {
+        "music_track": [
+          {
+            "name": "Trupets Of Jericho",
+            "track_id": 190
+          },
+          {
+            "name": "Machine Men",
+            "track_id": 191
+          },
+          {
+            "name": "The Alchemist",
+            "track_id": 192
+          },
+          {
+            "name": "Realword",
+            "track_id": 193
+          },
+          {
+            "name": "Free Speech For The Dumb",
+            "track_id": 408
+          }
+        ]
+      }
+    }
+    ```
+
+2. `query getAlbumsAsArtist` as *artist*
+
+    **Headers**:
+
+    ```http
+    X-Hasura-Role: artist
+    X-Hasura-Artist-Id: 9
+    ```
+
+    **Query**:
+
+    ```graphql
+    query getAlbumsAsArtist {
+      music_album {
+        title
+      }
+    }
+    ```
+
+    **Result**:
+
+    ```json
+    {
+      "data": {
+        "music_album": [
+          {
+            "title": "BackBeat Soundtrack"
+          }
+        ]
+      }
+    }
+    ```
+
+3. `query trackValue` as *artist*
+
+    **Headers**:
+
+    ```http
+    X-Hasura-Role: artist
+    ```
+
+    **Query**:
+
+    ```graphql
+    query trackValue {
+      music_track_aggregate {
+        aggregate {
+          sum {
+            unit_price
+          }
+        }
+      }
+    }
+    ```
+
+    **Result**:
+
+    ```json
+    {
+      "errors": [
+        {
+          "message": "field 'music_track_aggregate' not found in type: 'query_root'",
+          "extensions": {
+            "path": "$.selectionSet.music_track_aggregate",
+            "code": "validation-failed"
+          }
+        }
+      ]
+    }
+    ```
+
+4. `xxx` as *xxx*
+
+    **Headers**:
+
+    ```http
+    xxx
+    ```
+
+    **Query**:
+
+    ```graphql
+    xxx
+    ```
+
+    **Result**:
+
+    ```json
+    xxx
+    ```
+
+
+#### docker-compose.yaml for your working environment
+
+[docker-compose.yaml](./task-two/docker-compose.yaml)
+
+#### Metadata in YAML format for your working environment
+
+[metadata](./task-two/hasura/metadata/)
+
+#### Describe any challenges you encountered when executing the above queries and your troubleshooting steps to address them
+
+1. Query *getAlbumsAsArtist* returned albums of other artists too because the filter in *metadata\databases\PG\tables\public_albums.yaml* was set up to return albums of the specified artist and those of all artists with an id greater than 10. Corrected this by removing the incorrect part of the filter.
+2. Query *getAlbumsAsArtist* required the header *x-hasura-user-id* instead of *x-hasura-artist-id*. Corrected the name of the session variable in *public_album.yaml* and *public_artists.yaml* to *X-Hasura-Artist-Id*.
+3. Query *trackValue* allowed users in the role *artist* to run aggregate queries on the track table. Corrected by changing `select_permissions.role.permission.allow_aggregations` to `false`.

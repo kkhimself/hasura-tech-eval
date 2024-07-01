@@ -1,17 +1,17 @@
 table:
-  name: albums
+  name: album
   schema: public
 object_relationships:
   - name: artist
     using:
       foreign_key_constraint_on: artist_id
 array_relationships:
-  - name: tracks
+  - name: track
     using:
       foreign_key_constraint_on:
         column: album_id
         table:
-          name: tracks
+          name: track
           schema: public
 select_permissions:
   - role: artist
@@ -19,12 +19,12 @@ select_permissions:
       columns:
         - title
         - artist_id
-        - id
+        - album_id
       filter:
         artist:
-          _or:
-          - id:
-              _eq: X-Hasura-User-Id
-          - id:
-              _gt: 10
+          # _or:
+          artist_id:
+              _eq: X-Hasura-Artist-Id
+          # - artist_id:
+          #     _gt: 10
     comment: ""
